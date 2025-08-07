@@ -15,9 +15,10 @@ public class ProductDto
     public bool IsAvailable { get; set; }
     public byte Rating { get; set; } // For a double type
     public Image? Thumbnail { get; set; } // For an Image type (needs System.Drawing)
+    public double Progress { get; set; }
 
     // Constructor for easy initialization
-    public ProductDto(int id, string name, string category, decimal price, int stockQuantity, DateTime lastRestockDate, bool isAvailable, byte rating, Image? thumbnail = null)
+    public ProductDto(int id, string name, string category, decimal price, int stockQuantity, DateTime lastRestockDate, bool isAvailable, byte rating, Image? thumbnail = null, double progress = 0)
     {
         Id = id;
         Name = name;
@@ -28,6 +29,7 @@ public class ProductDto
         IsAvailable = isAvailable;
         Rating = rating;
         Thumbnail = thumbnail;
+        Progress = progress;
     }
 }
 

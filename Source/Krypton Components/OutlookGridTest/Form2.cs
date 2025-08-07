@@ -27,12 +27,15 @@ namespace OutlookGridTest
 
             kryptonAllInOneGrid1.OutlookGrid.OnGridColumnCreating += OutlookGrid_OnGridColumnCreating;
             kryptonAllInOneGrid1.OutlookGrid.OnInternalColumnCreating += OutlookGrid_OnInternalColumnCreating;
+            kryptonAllInOneGrid1.OutlookGrid.OnCreateColumn = CreateCustomColumn;
 
             kryptonOutlookGrid1.OnGridColumnCreating += OutlookGrid_OnGridColumnCreating;
             kryptonOutlookGrid1.OnInternalColumnCreating += OutlookGrid_OnInternalColumnCreating;
+            kryptonOutlookGrid1.OnCreateColumn = CreateCustomColumn;
 
             outlookGrid1.OnGridColumnCreating += OutlookGrid_OnGridColumnCreating;
             outlookGrid1.OnInternalColumnCreating += OutlookGrid_OnInternalColumnCreating;
+            outlookGrid1.OnCreateColumn = CreateCustomColumn;
         }
 
         #endregion Identity
@@ -41,30 +44,6 @@ namespace OutlookGridTest
 
         private void Form2_Load(object sender, EventArgs e)
         {
-            //DataTable dt = new DataTable("Tmp");
-            //kryptonDataGridView1.Columns.Clear();
-            //kryptonDataGridView1.AutoGenerateColumns = false;
-            //KryptonDataGridViewRatingColumn Column12 = new KryptonDataGridViewRatingColumn()
-            //{
-            //    DataPropertyName = "Images",
-            //    HeaderText = "Images int",
-            //    RatingMaximum = 10,
-            //    SortMode = DataGridViewColumnSortMode.Automatic
-            //};
-
-            //kryptonDataGridView1.Columns.Add(Column12);
-
-            //dt = new();
-            //dt.Columns.Add("Images", typeof(byte));
-
-            //dt.Rows.Add(((byte)1));
-            //dt.Rows.Add(((byte)2));
-            //dt.Rows.Add(((byte)3));
-            //dt.Rows.Add(((byte)4));
-
-            //kryptonDataGridView1.DataSource = dt;
-
-            //return;
             List<ProductDto> dataSource = GenerateProductData(_numberOfProductsToGenerate);
             AfterSetDataSource(dataSource);
             SetButtonText();
@@ -89,13 +68,14 @@ namespace OutlookGridTest
         private void OutlookGrid_OnInternalColumnCreating(object? sender, EventArgs e)
         {
             OutlookGridColumn column = (OutlookGridColumn)sender!;
-            if (column.Name == "StockQuantity")
+            if (column.Name == nameof(ProductDto.StockQuantity))
             {
                 if (column.DataGridViewColumn.DataGridView!.Name == outlookGrid1.Name)
                     column.AggregationFormatString = "{1} of {0}: {2}";
                 column.AggregationType = KryptonOutlookGridAggregationType.Sum;
             }
-            else if (column.Name == "Category")
+            //else if (column.Name == "Category")
+            else if (column.Name == nameof(ProductDto.Progress))
             {
                 column.GroupIndex = 0;
                 column.SortIndex = 0;
@@ -106,7 +86,7 @@ namespace OutlookGridTest
         private void OutlookGrid_OnGridColumnCreating(object? sender, EventArgs e)
         {
             DataGridViewColumn column = (DataGridViewColumn)sender!;
-            if (column.Name == "Rating")
+            if (column.Name == nameof(ProductDto.Rating))
             {
                 column.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
                 column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
@@ -137,6 +117,45 @@ namespace OutlookGridTest
                 column.Width = 125;
             }
         }
+
+        private DataGridViewColumn? CreateCustomColumn(string columnName, Type dataType)
+        {
+            if (columnName.Equals(nameof(ProductDto.Rating), StringComparison.OrdinalIgnoreCase))
+            {
+                KryptonDataGridViewRatingColumn col = new()
+                {
+                    Name = columnName,
+                    HeaderText = columnName,
+                    DataPropertyName = columnName,
+                    ValueType = dataType,
+                    RatingMaximum = 10,
+                    SortMode = DataGridViewColumnSortMode.Programmatic,
+                    AutoSizeMode = DataGridViewAutoSizeColumnMode.None
+                };
+                return col;
+            }
+
+            if (columnName.Equals(nameof(ProductDto.Progress), StringComparison.OrdinalIgnoreCase))
+            {
+                KryptonDataGridViewProgressColumn newColumn = new()
+                {
+                    Name = columnName,
+                    DataPropertyName = columnName,
+                    HeaderText = columnName,
+                    Width = 100,
+                    SortMode = DataGridViewColumnSortMode.Programmatic
+                };
+                newColumn.DefaultCellStyle.Format = "0%";
+                newColumn.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+                return newColumn;
+            }
+
+            // If the column name doesn't match your custom condition,
+            // return null. This tells the KryptonOutlookGrid to fall back
+            // to its default column creation logic.
+            return null;
+        }
+
 
         #endregion Common Events
 
@@ -320,6 +339,8 @@ namespace OutlookGridTest
                 byte rating = Convert.ToByte(Math.Round(_random.NextDouble() * 5.0, 1)); // Rating between 0.0 and 5.0, one decimal place
                 if (rating < 1) rating = Convert.ToByte(1); // Ensure a minimum rating of 1.0 for more realistic data
 
+                double progress = Convert.ToDouble(_random.Next(0, 100)) / 100; // Progress between 0 and 100
+
                 Image? productImage = null; // Keep null for large data sets unless actual image data is needed for testing
 
                 products.Add(new ProductDto(
@@ -331,7 +352,8 @@ namespace OutlookGridTest
                     lastUpdated,
                     isAvailable,
                     rating,
-                    productImage
+                    productImage,
+                    progress
                 ));
             }
             return products;
@@ -362,6 +384,8 @@ namespace OutlookGridTest
             dataSource.Columns.Add("LastRestockDate", typeof(DateTime));
             dataSource.Columns.Add("IsAvailable", typeof(bool));
             dataSource.Columns.Add("Rating", typeof(byte));
+            dataSource.Columns.Add("Thumbnail", typeof(byte));
+            dataSource.Columns.Add("Progress", typeof(double));
             // productsTable.Columns.Add("ProductImage", typeof(Image)); // Add if you intend to use images
 
             // Get generated product data
@@ -378,7 +402,9 @@ namespace OutlookGridTest
                     product.StockQuantity,
                     product.LastRestockDate,
                     product.IsAvailable,
-                    product.Rating
+                    product.Rating,
+                    product.Thumbnail,
+                    product.Progress
                 // Add product.ProductImage if you have an Image column
                 );
             }
@@ -411,7 +437,8 @@ namespace OutlookGridTest
                     product.LastRestockDate,
                     product.IsAvailable,
                     product.Rating,
-                    // product.ProductImage // Include if you want to pass images to raw array
+                    product.Thumbnail!,
+                    product.Progress
                 });
             }
 
@@ -442,7 +469,9 @@ namespace OutlookGridTest
                     { "StockQuantity", product.StockQuantity },
                     { "LastRestockDate", product.LastRestockDate },
                     { "IsAvailable", product.IsAvailable },
-                    { "Rating", product.Rating }
+                    { "Rating", product.Rating },
+                    { "Thumbnail", product.Thumbnail! },
+                    { "Progress", product.Progress }
                     // { "ProductImage", product.ProductImage } // Include if you want to pass images to dictionary
                 });
             }

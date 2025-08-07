@@ -3509,6 +3509,23 @@ namespace Krypton.Toolkit
         #region Set DataSource
 
         /// <summary>
+        /// Gets or sets a custom function to create a <see cref="DataGridViewColumn"/> for a given column name and data type.
+        /// </summary>
+        /// <remarks>
+        /// This delegate allows external code to override the default column creation logic. 
+        /// If the function returns a valid <see cref="DataGridViewColumn"/>, that column will be used. 
+        /// If the function returns <see langword="null"/>, the grid will fall back to its default column creation method.
+        /// </remarks>
+        /// <value>
+        /// A <see cref="Func{T1, T2, TResult}"/> delegate that takes the column name (<see cref="string"/>) 
+        /// and data type (<see cref="Type"/>) as input and returns the custom <see cref="DataGridViewColumn"/>, 
+        /// or <see langword="null"/> to use the default column.
+        /// </value>
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public Func<string, Type, DataGridViewColumn?>? OnCreateColumn { get; set; }
+
+        /// <summary>
         /// Occurs when a grid column is about to be created, allowing external customization.
         /// </summary>
         /// <remarks>
@@ -4623,6 +4640,15 @@ namespace Krypton.Toolkit
         /// <returns>A new instance of a <see cref="DataGridViewColumn"/> (e.g., <see cref="KryptonDataGridViewTextBoxColumn"/>, <see cref="KryptonDataGridViewCheckBoxColumn"/>, <see cref="KryptonDataGridViewImageColumn"/>) configured for the specified data.</returns>
         protected virtual DataGridViewColumn CreateGridColumn(string columnName, Type dataType)
         {
+            DataGridViewColumn? customColumn = OnCreateColumn?.Invoke(columnName, dataType);
+
+            // If a custom column was created and returned, use it.
+            if (customColumn != null)
+            {
+                CustomizeGridColumn(customColumn);
+                return customColumn;
+            }
+
             if (dataType == typeof(bool))
             {
                 KryptonDataGridViewCheckBoxColumn col = new()
@@ -4651,15 +4677,14 @@ namespace Krypton.Toolkit
                 CustomizeGridColumn(col);
                 return col;
             }
-            else if (dataType == typeof(byte))
+            else if (dataType == typeof(DateTime))
             {
-                KryptonDataGridViewRatingColumn col = new()
+                KryptonDataGridViewDateTimePickerColumn col = new()
                 {
                     Name = columnName,
                     HeaderText = columnName,
                     DataPropertyName = columnName,
                     ValueType = dataType,
-                    RatingMaximum = 10,
                     SortMode = DataGridViewColumnSortMode.Programmatic,
                     AutoSizeMode = DataGridViewAutoSizeColumnMode.None
                 };

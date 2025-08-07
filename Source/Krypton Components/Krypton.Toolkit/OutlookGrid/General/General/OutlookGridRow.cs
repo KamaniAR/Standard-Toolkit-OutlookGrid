@@ -565,6 +565,43 @@ namespace Krypton.Toolkit
                     imageOffset = groupImageWidth;
                 }
 
+                Font groupFont = grid.GridPalette?.GetContentShortTextFont(PaletteContentStyle.LabelBoldControl, overallRowRenderingState) ??
+                                 new Font(grid.DefaultCellStyle.Font!, FontStyle.Bold);
+
+                if (_group.Column.DataGridViewColumn is KryptonDataGridViewProgressColumn progressColumn)
+                {
+                    if (grid.Rows.SharedRow(rowIndex).Index != -1)
+                    {
+                        decimal decValue = _group.Value.ToDecimal();
+                        // progress bar width
+                        int barWidthCorrected = _group.Column.DataGridViewColumn.Width - InheritedStyle.Padding.Left - InheritedStyle.Padding.Right - 5;
+                        int barWidth = decValue >= 1 ? barWidthCorrected : (int)(barWidthCorrected * decValue);
+                        Rectangle progressBounds = new(contentBounds.Left + GlobalStaticValues.ImageOffsetWidth + imageOffset + groupLevelIndentation, contentBounds.Top, barWidthCorrected, contentBounds.Height);
+                        if ((progressColumn.ProgressBar.ShowBorder || progressColumn.ProgressBar.ShowBar)
+                            && barWidth >= 0 && barWidth <= barWidthCorrected)
+                        {
+                            // Draw the bar
+                            DrawProgressBar(progressColumn, graphics, progressBounds, barWidth, barWidthCorrected);
+                        }
+
+                        var progressTextForeColor = grid.GridPalette!.GetContentShortTextColor1(PaletteContentStyle.LabelNormalControl, overallRowRenderingState);
+                        // Custom text color for the progress cell
+                        if (progressColumn.ProgressBar.TextColor != GlobalStaticValues.EMPTY_COLOR)
+                        {
+                            progressTextForeColor = progressColumn.ProgressBar.TextColor;
+                        }
+
+                        // Offset the text 1 pixel so it is not drawn against the border
+                        TextFormatFlags progressFlags = TextFormatFlags.SingleLine | TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter;
+                        var progressFormat = progressColumn.DefaultCellStyle.Format.ToStringNull();
+                        var formattedValue = progressFormat != ""
+                            ? string.Format("{0:" + progressFormat + "}", decValue)
+                            : (decValue * 100).ToString();
+                        TextRenderer.DrawText(graphics, formattedValue, groupFont, progressBounds, progressTextForeColor, progressFlags);
+                        imageOffset += barWidthCorrected + 18;
+                    }
+                }
+
                 // --- Draw text, using the current grid font ---
                 int offsetText = contentBounds.Left + 18 + imageOffset + groupLevelIndentation; // This is the X-start for text
                 int textRectWidth = contentBounds.Right - offsetText;
@@ -578,9 +615,6 @@ namespace Krypton.Toolkit
                 {
                     groupTextForeColor = grid.GridPalette!.GetContentShortTextColor1(PaletteContentStyle.LabelNormalControl, overallRowRenderingState);
                 }
-
-                Font groupFont = grid.GridPalette?.GetContentShortTextFont(PaletteContentStyle.LabelBoldControl, overallRowRenderingState) ??
-                                 new Font(grid.DefaultCellStyle.Font!, FontStyle.Bold);
 
                 Rectangle textDrawingRect = new(offsetText, textDrawingTopY, textRectWidth,
                     rowBounds.Height - (textDrawingTopY - rowBounds.Top) - customBottomLineAreaHeight - bottomContentPadding
@@ -632,6 +666,89 @@ namespace Krypton.Toolkit
                     grid.InvalidateRow(grid.PreviousSelectedGroupRow);
                 }
                 base.Paint(graphics, clipBounds, rowBounds, rowIndex, rowState, isFirstDisplayedRow, isLastVisibleRow);
+            }
+        }
+
+        private Rectangle GetRectangleFullBar(Rectangle cellBounds, int barwidthCorrected)
+        {
+            // Rectangle for the complete bar
+            // It is cached on the column so it is only calculated when the width of the column changes or RTL changes.
+            return DataGridView!.RightToLeft == RightToLeft.No
+                // Left to right
+                ? new(
+                    cellBounds.X + 2 + InheritedStyle.Padding.Left,
+                    cellBounds.Y + 1 + InheritedStyle.Padding.Top,
+                    barwidthCorrected,
+                    cellBounds.Height - 4 - InheritedStyle.Padding.Bottom - InheritedStyle.Padding.Top)
+                // Right to left
+                : new(
+                    cellBounds.X + 2 + InheritedStyle.Padding.Left,
+                    cellBounds.Y + 1 + InheritedStyle.Padding.Top,
+                    barwidthCorrected,
+                    cellBounds.Height - 4 - InheritedStyle.Padding.Bottom - InheritedStyle.Padding.Top);
+        }
+
+        private Rectangle GetRectangleCompleted(Rectangle cellBounds, int barWidth)
+        {
+            return DataGridView!.RightToLeft == RightToLeft.No
+                // Left to right
+                ? new(
+                    cellBounds.X + 2 + InheritedStyle.Padding.Left,
+                    cellBounds.Y + 1 + InheritedStyle.Padding.Top,
+                    barWidth,
+                    cellBounds.Height - 4 - InheritedStyle.Padding.Bottom - InheritedStyle.Padding.Top)
+                // Right to left
+                : new(
+                    cellBounds.X + 2 + (cellBounds.Width - 5 - barWidth - InheritedStyle.Padding.Left),
+                    cellBounds.Y + 1 + InheritedStyle.Padding.Top,
+                    barWidth,
+                    cellBounds.Height - 4 - InheritedStyle.Padding.Bottom - InheritedStyle.Padding.Top);
+        }
+
+        private void DrawProgressBar(KryptonDataGridViewProgressColumn KryptonOwningColumn, Graphics graphics, Rectangle cellBounds, int barWidth, int barwidthCorrected)
+        {
+            // Rectangle for the complete bar & border
+            Rectangle rectFullBar = GetRectangleFullBar(cellBounds, barwidthCorrected);
+
+            // Draw the bar
+            if (KryptonOwningColumn!.ProgressBar.ShowBar)
+            {
+                // Rectangle for the completed progress
+                Rectangle rectCompleted = GetRectangleCompleted(cellBounds, barWidth);
+
+                // Draw the full bar
+                if (KryptonOwningColumn.ProgressBar.UseSolidColor)
+                {
+                    using var brush = new SolidBrush(KryptonOwningColumn.RemainingColor1);
+                    graphics.FillRectangle(brush, rectFullBar);
+                }
+                else
+                {
+                    using var brush = new LinearGradientBrush(rectFullBar, KryptonOwningColumn.RemainingColor1, KryptonOwningColumn.RemainingColor2, KryptonOwningColumn.ProgressBar.LinearGradientMode);
+                    graphics.FillRectangle(brush, rectFullBar);
+                }
+
+                // Draw the completed portion if the barWidth greater than zero
+                if (barWidth > 0)
+                {
+                    if (KryptonOwningColumn.ProgressBar.UseSolidColor)
+                    {
+                        using var brush = new SolidBrush(KryptonOwningColumn.CompletedColor1);
+                        graphics.FillRectangle(brush, rectCompleted);
+                    }
+                    else
+                    {
+                        using var brush = new LinearGradientBrush(rectCompleted, KryptonOwningColumn.CompletedColor1, KryptonOwningColumn.CompletedColor2, KryptonOwningColumn.ProgressBar.LinearGradientMode);
+                        graphics.FillRectangle(brush, rectCompleted);
+                    }
+                }
+            }
+
+            // Draw the border
+            if (KryptonOwningColumn.ProgressBar.ShowBorder)
+            {
+                using Pen pen = new Pen(KryptonOwningColumn.BorderColor);
+                graphics.DrawRectangle(pen, rectFullBar);
             }
         }
 
