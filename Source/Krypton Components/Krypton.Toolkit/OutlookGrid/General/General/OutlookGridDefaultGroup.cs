@@ -332,7 +332,18 @@ namespace Krypton.Toolkit
         /// </summary>
         public virtual Image? GroupImage
         {
-            get => _groupImage;
+            get
+            {
+                if (_column?.DataGridViewColumn is KryptonDataGridViewRatingColumn ratingColumn)
+                {
+                    // If the column is a rating column, we can use the GetImage method to retrieve the image based on the cell value.
+                    if (_val is byte cellValue && cellValue > 0)
+                    {
+                        return ratingColumn.GetImage(cellValue);
+                    }
+                }
+                return _groupImage;
+            }
             set => _groupImage = value;
         }
 

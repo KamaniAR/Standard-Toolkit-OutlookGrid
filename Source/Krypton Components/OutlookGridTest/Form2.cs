@@ -41,6 +41,30 @@ namespace OutlookGridTest
 
         private void Form2_Load(object sender, EventArgs e)
         {
+            //DataTable dt = new DataTable("Tmp");
+            //kryptonDataGridView1.Columns.Clear();
+            //kryptonDataGridView1.AutoGenerateColumns = false;
+            //KryptonDataGridViewRatingColumn Column12 = new KryptonDataGridViewRatingColumn()
+            //{
+            //    DataPropertyName = "Images",
+            //    HeaderText = "Images int",
+            //    RatingMaximum = 10,
+            //    SortMode = DataGridViewColumnSortMode.Automatic
+            //};
+
+            //kryptonDataGridView1.Columns.Add(Column12);
+
+            //dt = new();
+            //dt.Columns.Add("Images", typeof(byte));
+
+            //dt.Rows.Add(((byte)1));
+            //dt.Rows.Add(((byte)2));
+            //dt.Rows.Add(((byte)3));
+            //dt.Rows.Add(((byte)4));
+
+            //kryptonDataGridView1.DataSource = dt;
+
+            //return;
             List<ProductDto> dataSource = GenerateProductData(_numberOfProductsToGenerate);
             AfterSetDataSource(dataSource);
             SetButtonText();
@@ -293,8 +317,8 @@ namespace OutlookGridTest
                 DateTime lastUpdated = DateTime.Now.AddDays(-_random.Next(0, 365));
                 bool isAvailable = _random.Next(0, 100) < 95; // 95% chance of being available
 
-                double rating = Math.Round(_random.NextDouble() * 5.0, 1); // Rating between 0.0 and 5.0, one decimal place
-                if (rating < 1.0) rating = 1.0; // Ensure a minimum rating of 1.0 for more realistic data
+                byte rating = Convert.ToByte(Math.Round(_random.NextDouble() * 5.0, 1)); // Rating between 0.0 and 5.0, one decimal place
+                if (rating < 1) rating = Convert.ToByte(1); // Ensure a minimum rating of 1.0 for more realistic data
 
                 Image? productImage = null; // Keep null for large data sets unless actual image data is needed for testing
 
@@ -337,7 +361,7 @@ namespace OutlookGridTest
             dataSource.Columns.Add("StockQuantity", typeof(int));
             dataSource.Columns.Add("LastRestockDate", typeof(DateTime));
             dataSource.Columns.Add("IsAvailable", typeof(bool));
-            dataSource.Columns.Add("Rating", typeof(double));
+            dataSource.Columns.Add("Rating", typeof(byte));
             // productsTable.Columns.Add("ProductImage", typeof(Image)); // Add if you intend to use images
 
             // Get generated product data

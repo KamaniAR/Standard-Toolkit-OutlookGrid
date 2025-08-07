@@ -79,7 +79,7 @@
             this.kryptonPropertyGrid1.Name = "kryptonPropertyGrid1";
             this.kryptonPropertyGrid1.PropertySort = System.Windows.Forms.PropertySort.Alphabetical;
             this.kryptonPropertyGrid1.SelectedObject = this.kryptonDataGridView1;
-            this.kryptonPropertyGrid1.Size = new System.Drawing.Size(392, 438);
+            this.kryptonPropertyGrid1.Size = new System.Drawing.Size(392, 426);
             this.kryptonPropertyGrid1.TabIndex = 6;
             // 
             // propertyGrid1
@@ -90,7 +90,7 @@
             this.propertyGrid1.Name = "propertyGrid1";
             this.propertyGrid1.PropertySort = System.Windows.Forms.PropertySort.Alphabetical;
             this.propertyGrid1.SelectedObject = this.Column12;
-            this.propertyGrid1.Size = new System.Drawing.Size(392, 438);
+            this.propertyGrid1.Size = new System.Drawing.Size(392, 426);
             this.propertyGrid1.TabIndex = 8;
             // 
             // kryptonButton2
@@ -107,7 +107,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1320, 462);
+            this.ClientSize = new System.Drawing.Size(1328, 438);
             this.Controls.Add(this.kryptonButton2);
             this.Controls.Add(this.propertyGrid1);
             this.Controls.Add(this.kryptonPropertyGrid1);

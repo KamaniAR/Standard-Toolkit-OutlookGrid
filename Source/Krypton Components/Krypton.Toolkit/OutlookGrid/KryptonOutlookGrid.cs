@@ -4651,6 +4651,21 @@ namespace Krypton.Toolkit
                 CustomizeGridColumn(col);
                 return col;
             }
+            else if (dataType == typeof(byte))
+            {
+                KryptonDataGridViewRatingColumn col = new()
+                {
+                    Name = columnName,
+                    HeaderText = columnName,
+                    DataPropertyName = columnName,
+                    ValueType = dataType,
+                    RatingMaximum = 10,
+                    SortMode = DataGridViewColumnSortMode.Programmatic,
+                    AutoSizeMode = DataGridViewAutoSizeColumnMode.None
+                };
+                CustomizeGridColumn(col);
+                return col;
+            }
             else // Default to text column
             {
                 KryptonDataGridViewTextBoxColumn col = new()

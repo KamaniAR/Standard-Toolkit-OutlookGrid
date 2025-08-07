@@ -554,11 +554,15 @@ namespace Krypton.Toolkit
                 if (_group.GroupImage != null)
                 {
                     int groupImageHeight = GlobalStaticValues.GroupImageSide; // Height of the group image
+                    int groupImageWidth = GlobalStaticValues.GroupImageSide; // Width of the group image
                     int imageX = contentBounds.Left + GlobalStaticValues.ImageOffsetWidth + groupLevelIndentation;
                     int imageY = rowBounds.Y + (rowBounds.Height / 2) - (groupImageHeight / 2); // Vertically centered
-
-                    graphics.DrawImage(_group.GroupImage, imageX, imageY, GlobalStaticValues.GroupImageSide, GlobalStaticValues.GroupImageSide);
-                    imageOffset = GlobalStaticValues.GroupImageSide;
+                    if (_group.Column.DataGridViewColumn is KryptonDataGridViewRatingColumn)
+                    {
+                        groupImageWidth = (GlobalStaticValues.GroupImageSide * _group.Value.ToInteger());
+                    }
+                    graphics.DrawImage(_group.GroupImage, imageX, imageY, groupImageWidth, GlobalStaticValues.GroupImageSide);
+                    imageOffset = groupImageWidth;
                 }
 
                 // --- Draw text, using the current grid font ---
