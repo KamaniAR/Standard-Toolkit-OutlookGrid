@@ -6153,6 +6153,12 @@ namespace Krypton.Toolkit
                             }
                         }
                     }
+
+                    if (!rowMatches && this.CurrentRow == row)
+                    {
+                        // Handle the case where the current row is about to be hidden.
+                        MoveCurrentCellToVisibleRow(this, row, searchColumnIndex);
+                    }
                     row.Visible = rowMatches;
                     foundMatch |= rowMatches;
                 }
@@ -6164,6 +6170,29 @@ namespace Krypton.Toolkit
             this.Refresh(); // Ensure UI updates
             return textToSearch;
             //return foundMatch ? textToSearch : SearchWithoutSource(textToSearch.Substring(0, textToSearch.Length - 1), searchColumnIndex);
+        }
+
+        private static void MoveCurrentCellToVisibleRow(DataGridView grid, DataGridViewRow currentRow, int searchColumnIndex)
+        {
+            var newCurrentRow = grid.Rows.Cast<DataGridViewRow>().FirstOrDefault(r => r != currentRow && r.Visible);
+            if (newCurrentRow != null)
+            {
+                int cellIndex = 0;
+                if (searchColumnIndex > -1 && grid.Columns[searchColumnIndex].Visible)
+                {
+                    cellIndex = searchColumnIndex;
+                }
+                else
+                {
+                    var firstVisibleColumn = grid.Columns.GetFirstColumn(DataGridViewElementStates.Visible);
+                    cellIndex = firstVisibleColumn?.Index ?? 0;
+                }
+                grid.CurrentCell = newCurrentRow.Cells[cellIndex];
+            }
+            else
+            {
+                grid.ClearSelection();
+            }
         }
 
         #region Paint Search Text
